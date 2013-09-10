@@ -17,6 +17,11 @@ using namespace std;
 #include <TFile.h>
 #include <TH1F.h>
 #include <TH2F.h>
+#include <TRandom.h>
+#include <TRandom3.h>
+
+// Custom header files for this sort
+# include "ValidationSort.hh"
 
 // Definitions
 #define CRYSTALS 64   // Total number of HPGe crystals
@@ -29,6 +34,7 @@ static TFile *outfile = 0;
 
 // Spectra pointers here:
 static TH1F *CrystalEnergy[CRYSTALS];
+static TH1F *CrystalEnergyReal[CRYSTALS];
 static TH1F *ShieldEnergy[CRYSTALS]; // For now only a sum of shield energy, no individual shield elements.
 
 
@@ -40,11 +46,19 @@ int main(int argc, char **argv){
    string str;
    // For holding the data items from each interaction....
    int DetN, SegN; 
-   float EkeV, Tsec, Xmm, Ymm, Zmm; 
+   float Etrue, Tsec, Xmm, Ymm, Zmm; 
    char Process[24], Collection[64];
+   // Derived quantities:
+   float Ereal;
+   float Sigma;
    // For holding data items for the whole event....   
    float CrysEn[CRYSTALS];
    float ShieldEn[CRYSTALS];
+   float CrysEnReal[CRYSTALS];
+   
+   // Random Generator for ERes modelling
+   TRandom *r1 = new TRandom3();  // TRandom3 is the closest to true random.
+                                    // Faster options available if neccarsary.
    
    //  Open the input file
    ifstream infile;
@@ -65,9 +79,12 @@ int main(int argc, char **argv){
    
    // Initialise spectra...
    for(i=0;i<=CRYSTALS;i++) {
-      sprintf(name,"Crystal%d",i); 
+      sprintf(name,"Crys%d",i); 
       sprintf(title,"Crystal %d Energy (keV)",i); 
       CrystalEnergy[i] = new TH1F(name,title,8192,0,2048);
+      sprintf(name,"Crys%d Real",i); 
+      sprintf(title,"Realistic Crystal %d Energy (keV)",i); 
+      CrystalEnergyReal[i] = new TH1F(name,title,8192,0,2048);
       sprintf(name,"Shield%d",i); 
       sprintf(title,"Shield %d Energy (keV)",i);      
       ShieldEnergy[i] = new TH1F(name,title,8192,0,2048);
@@ -82,25 +99,32 @@ int main(int argc, char **argv){
       
       if(str.substr(0,4)=="Hits") {  // If this is a new event then fill spectra and reset event data
          for(i=0;i<CRYSTALS;i++) {
+            if(CrysEn[i] > 0) {
+               // Find sigma and apply Etrue -> Ereal
+               Sigma = EResSigma[0] + (CrysEn[i] * (EResSigma[1] / (1332.5 - 59.5)  ) );
+               CrysEnReal[i] = CrysEn[i]  + r1->Gaus(0,Sigma) ;
+            } 
             if(CrysEn[i] > MIN_EN) {CrystalEnergy[i]->Fill(CrysEn[i]);}
             if(ShieldEn[i] > MIN_EN) {ShieldEnergy[i]->Fill(ShieldEn[i]);}  
+            if(CrysEnReal[i] > MIN_EN) {CrystalEnergyReal[i]->Fill(CrysEnReal[i]);}
          }   
          memset(CrysEn,0.0,(CRYSTALS*sizeof(float)));
+         memset(CrysEnReal,0.0,(CRYSTALS*sizeof(float)));
          memset(ShieldEn,0.0,(CRYSTALS*sizeof(float)));
          continue;
       }
       else {  // This is an interaction to be added to event record...
          // Scan input string for expected data items:
-         sscanf(str.c_str(),"%i %i %f %f %f %f %f %s %s", &DetN, &SegN, &EkeV, &Tsec, &Xmm, &Ymm, &Zmm, Process, Collection); 
+         sscanf(str.c_str(),"%i %i %f %f %f %f %f %s %s", &DetN, &SegN, &Etrue, &Tsec, &Xmm, &Ymm, &Zmm, Process, Collection); 
          
          crystal = ((DetN -1) * 4) + SegN -1; // Get crystal number from detector and segment
                      // note: "segment" in GEANT output means crystal in real world 
          //printf("%s\n%s\n",Process, Collection);
          if(strcmp(Collection,"CollectionGriffinForwardGe") || strcmp(Collection,"CollectionGriffinBackGe")) {
-            CrysEn[crystal] += EkeV; // sum energy in this crystal  
+            CrysEn[crystal] += Etrue; // sum energy in this crystal  
          }
          else{ 
-            ShieldEn[crystal] += EkeV;
+            ShieldEn[crystal] += Etrue;
          }
          
          
@@ -112,6 +136,7 @@ int main(int argc, char **argv){
    // Now write the spectra....  (I think I can do these all at once but not sure how just yet.
    for(i=0;i<CRYSTALS;i++) {
       CrystalEnergy[i]->Write();
+      CrystalEnergyReal[i]->Write();
       ShieldEnergy[i]->Write();
    }
    
