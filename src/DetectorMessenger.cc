@@ -32,9 +32,9 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-#include "DetectorMessenger.hh"
+#include "DetectorMessenger.hh" 
 
-#include "DetectorConstruction.hh"
+#include "DetectorConstruction.hh" 
 #include "G4UIdirectory.hh"
 #include "G4UIcmdWithAString.hh"
 #include "G4UIcmdWithADoubleAndUnit.hh"
@@ -42,6 +42,10 @@
 #include "G4UIcmdWithAnInteger.hh"
 #include "G4UIcmdWith3VectorAndUnit.hh"
 #include "G4UIcmdWithABool.hh"
+#include "G4UIcmdWith3Vector.hh"
+#include "G4UIcommand.hh"
+#include "G4UIparameter.hh"
+#include "G4UIcmdWithADouble.hh"
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
@@ -114,9 +118,65 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* Det)
   FieldBoxMagneticFieldCmd->SetUnitCategory("Magnetic flux density");
   FieldBoxMagneticFieldCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 
+  // Box Stuff
+  addBoxMatCmd = new G4UIcmdWithAString("/DetSys/det/boxMat",this);
+  addBoxMatCmd->SetGuidance("Set box material.");
+  addBoxMatCmd->SetParameterName("choice",false);
+  addBoxMatCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  addBoxThicknessCmd = new G4UIcmdWithADoubleAndUnit("/DetSys/det/boxThickness",this);
+  addBoxThicknessCmd->SetGuidance("Set box thickness.");
+  addBoxThicknessCmd->SetUnitCategory("Length");
+  addBoxThicknessCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  addBoxInnerDimensionsCmd = new G4UIcmdWith3VectorAndUnit("/DetSys/det/boxInnerDimensions",this);
+  addBoxInnerDimensionsCmd->SetGuidance("Set box inner dimensions.");
+  addBoxInnerDimensionsCmd->SetUnitCategory("Length");
+  addBoxInnerDimensionsCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  addBoxColourCmd = new G4UIcmdWith3Vector("/DetSys/det/boxColour",this);
+  addBoxColourCmd->SetGuidance("Set box colour.");
+  addBoxColourCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  addBoxCmd = new G4UIcmdWithoutParameter("/DetSys/det/addBox",this);
+  addBoxCmd->SetGuidance("Add a box.");
+  addBoxCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  // Grid Stuff
+  addGridMatCmd = new G4UIcmdWithAString("/DetSys/det/gridMat",this);
+  addGridMatCmd->SetGuidance("Set grid material.");
+  addGridMatCmd->SetParameterName("choice",false);
+  addGridMatCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  addGridSizeCmd = new G4UIcmdWithADoubleAndUnit("/DetSys/det/gridSize",this);
+  addGridSizeCmd->SetGuidance("Set grid size.");
+  addGridSizeCmd->SetUnitCategory("Length");
+  addGridSizeCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  addGridDimensionsCmd = new G4UIcmdWith3VectorAndUnit("/DetSys/det/gridDimensions",this);
+  addGridDimensionsCmd->SetGuidance("Set grid dimensions.");
+  addGridDimensionsCmd->SetUnitCategory("Length");
+  addGridDimensionsCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  addGridColourCmd = new G4UIcmdWith3Vector("/DetSys/det/gridColour",this);
+  addGridColourCmd->SetGuidance("Set grid colour.");
+  addGridColourCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  addGridCmd = new G4UIcmdWithoutParameter("/DetSys/det/addGrid",this);
+  addGridCmd->SetGuidance("Add a grid.");
+  addGridCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
   AddApparatusSpiceTargetChamberCmd = new G4UIcmdWithoutParameter("/DetSys/app/addSpiceTargetChamber",this);
   AddApparatusSpiceTargetChamberCmd->SetGuidance("Add SPICE target chamber.");
   AddApparatusSpiceTargetChamberCmd->AvailableForStates(G4State_Idle);
+
+  AddApparatus8piVacuumChamberCmd = new G4UIcmdWithoutParameter("/DetSys/app/add8piVacuumChamber",this);
+  AddApparatus8piVacuumChamberCmd->SetGuidance("Add 8pi vacuum chamber.");
+  AddApparatus8piVacuumChamberCmd->AvailableForStates(G4State_Idle);
+
+  AddApparatus8piVacuumChamberAuxMatShellCmd = new G4UIcmdWithAnInteger("/DetSys/app/add8piVacuumChamberAuxMatShell",this);
+  AddApparatus8piVacuumChamberAuxMatShellCmd->SetGuidance("Add AuxMat shell around 8pi vacuum chamber");
+  AddApparatus8piVacuumChamberAuxMatShellCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 
   UpdateCmd = new G4UIcmdWithoutParameter("/DetSys/det/update",this);
   UpdateCmd->SetGuidance("Update geometry.");
@@ -136,6 +196,14 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* Det)
   AddDetectionSystemSodiumIodideCmd->SetGuidance("Add Detection System SodiumIodide");
   AddDetectionSystemSodiumIodideCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 
+  AddDetectionSystem8piCmd = new G4UIcmdWithAnInteger("/DetSys/det/add8pi",this);
+  AddDetectionSystem8piCmd->SetGuidance("Add Detection System 8pi");
+  AddDetectionSystem8piCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  AddDetectionSystem8piDetectorCmd = new G4UIcmdWithAnInteger("/DetSys/det/add8piDetector",this);
+  AddDetectionSystem8piDetectorCmd->SetGuidance("Add 8pi Detector");
+  AddDetectionSystem8piDetectorCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
   AddDetectionSystemGriffinForwardCmd = new G4UIcmdWithAnInteger("/DetSys/det/addGriffinForward",this);
   AddDetectionSystemGriffinForwardCmd->SetGuidance("Add Detection System GriffinForward");
   AddDetectionSystemGriffinForwardCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
@@ -151,6 +219,10 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* Det)
   AddDetectionSystemGriffinBackDetectorCmd = new G4UIcmdWithAnInteger("/DetSys/det/addGriffinBackDetector",this);
   AddDetectionSystemGriffinBackDetectorCmd->SetGuidance("Add GriffinBack Detector");
   AddDetectionSystemGriffinBackDetectorCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  AddDetectionSystemGriffinPositionConfigCmd = new G4UIcmdWith3Vector("/DetSys/det/addGriffinPositionConfig",this);
+  AddDetectionSystemGriffinPositionConfigCmd->SetGuidance("Add Griffin Detector #, Position #, Config (0=forward, 1=back)");
+  AddDetectionSystemGriffinPositionConfigCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 
   AddDetectionSystemSceptarCmd = new G4UIcmdWithAnInteger("/DetSys/det/addSceptar",this);
   AddDetectionSystemSceptarCmd->SetGuidance("Add Detection System Sceptar");
@@ -190,15 +262,30 @@ DetectorMessenger::~DetectorMessenger()
   delete FieldBoxDimensionsCmd;
   delete FieldBoxPositionCmd;
   delete FieldBoxMagneticFieldCmd;
+  delete addBoxMatCmd;
+  delete addBoxThicknessCmd;
+  delete addBoxInnerDimensionsCmd;
+  delete addBoxColourCmd;
+  delete addBoxCmd;
+  delete addGridMatCmd;
+  delete addGridSizeCmd;
+  delete addGridDimensionsCmd;
+  delete addGridColourCmd;
+  delete addGridCmd;
   delete AddApparatusSpiceTargetChamberCmd;
   delete AddDetectionSystemGammaTrackingCmd;
+  delete AddApparatus8piVacuumChamberCmd;
+  delete AddApparatus8piVacuumChamberAuxMatShellCmd;
   delete AddDetectionSystemBrillance380V1Cmd;
   delete AddDetectionSystemSodiumIodideCmd;
+  delete AddDetectionSystem8piCmd;
+  delete AddDetectionSystem8piDetectorCmd;
   delete AddDetectionSystemSceptarCmd;
   delete AddDetectionSystemGriffinForwardCmd;
   delete AddDetectionSystemGriffinForwardDetectorCmd;
   delete AddDetectionSystemGriffinBackCmd;
   delete AddDetectionSystemGriffinBackDetectorCmd;
+  delete AddDetectionSystemGriffinPositionConfigCmd;
   delete AddDetectionSystemSpiceCmd;
   delete AddDetectionSystemSpiceV02Cmd;
   delete AddDetectionSystemPacesCmd;
@@ -207,7 +294,7 @@ DetectorMessenger::~DetectorMessenger()
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
 void DetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
-{
+{			
   if( command == WorldMaterialCmd ) { 
     Detector->SetWorldMaterial(newValue);
   } 
@@ -244,8 +331,44 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
   if( command == FieldBoxMagneticFieldCmd ) {
     Detector->SetFieldBoxMagneticField(FieldBoxMagneticFieldCmd->GetNew3VectorValue(newValue));
   }
+  if( command == addBoxMatCmd ) {
+    Detector->SetBoxMat(newValue);
+  }
+  if( command == addBoxThicknessCmd ) {
+    Detector->SetBoxThickness(addBoxThicknessCmd->GetNewDoubleValue(newValue));
+  }
+  if( command == addBoxInnerDimensionsCmd ) {
+    Detector->SetBoxInnerDimensions(addBoxInnerDimensionsCmd->GetNew3VectorValue(newValue));
+  }
+  if( command == addBoxColourCmd ) {
+    Detector->SetBoxColour(addBoxColourCmd->GetNew3VectorValue(newValue));
+  }
+  if( command == addBoxCmd ) {
+    Detector->AddBox();
+  }
+  if( command == addGridMatCmd ) {
+    Detector->SetGridMat(newValue);
+  }
+  if( command == addGridSizeCmd ) {
+    Detector->SetGridSize(addGridSizeCmd->GetNewDoubleValue(newValue));
+  }
+  if( command == addGridDimensionsCmd ) {
+  	Detector->SetGridDimensions(addGridDimensionsCmd->GetNew3VectorValue(newValue));
+  }
+  if( command == addGridColourCmd ) {
+    Detector->SetGridColour(addGridColourCmd->GetNew3VectorValue(newValue));
+  }
+  if( command == addGridCmd ) {
+    Detector->AddGrid();
+  }  
   if( command == AddApparatusSpiceTargetChamberCmd ) { 
     Detector->AddApparatusSpiceTargetChamber(); 
+  }
+  if( command == AddApparatus8piVacuumChamberCmd ) {
+    Detector->AddApparatus8piVacuumChamber();
+  }
+  if( command == AddApparatus8piVacuumChamberAuxMatShellCmd ) {
+    Detector->AddApparatus8piVacuumChamberAuxMatShell(AddApparatus8piVacuumChamberAuxMatShellCmd->GetNewIntValue(newValue));
   }
   if( command == AddDetectionSystemGammaTrackingCmd ) {
     Detector->AddDetectionSystemGammaTracking(AddDetectionSystemGammaTrackingCmd->GetNewIntValue(newValue)); 
@@ -255,6 +378,12 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
   }
   if( command == AddDetectionSystemSodiumIodideCmd ) {
     Detector->AddDetectionSystemSodiumIodide(AddDetectionSystemSodiumIodideCmd->GetNewIntValue(newValue));
+  }
+  if( command == AddDetectionSystem8piCmd ) { 
+    Detector->AddDetectionSystem8pi(AddDetectionSystem8piCmd->GetNewIntValue(newValue)); 
+  }
+  if( command == AddDetectionSystem8piDetectorCmd ) { 
+    Detector->AddDetectionSystem8piDetector(AddDetectionSystem8piDetectorCmd->GetNewIntValue(newValue)); 
   }
   if( command == AddDetectionSystemSceptarCmd ) { 
     Detector->AddDetectionSystemSceptar(AddDetectionSystemSceptarCmd->GetNewIntValue(newValue)); 
@@ -270,6 +399,9 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
   }
   if( command == AddDetectionSystemGriffinBackDetectorCmd ) {
     Detector->AddDetectionSystemGriffinBackDetector(AddDetectionSystemGriffinBackDetectorCmd->GetNewIntValue(newValue));
+  }
+  if( command == AddDetectionSystemGriffinPositionConfigCmd ) {
+    Detector->AddDetectionSystemGriffinPositionConfig(AddDetectionSystemGriffinPositionConfigCmd->GetNew3VectorValue(newValue));
   }
   if( command == AddDetectionSystemSpiceCmd ) { 
     Detector->AddDetectionSystemSpice(AddDetectionSystemSpiceCmd->GetNewIntValue(newValue)); 

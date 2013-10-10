@@ -44,6 +44,7 @@ class G4UIcmdWithAString;
 class G4UIcmdWithADoubleAndUnit;
 class G4UIcmdWithoutParameter;
 class G4UIcmdWithAnInteger;
+class G4UIcmdWith3Vector;
 class G4UIcmdWith3VectorAndUnit;
 class G4UIcmdWithABool;
 
@@ -52,7 +53,7 @@ class G4UIcmdWithABool;
 class DetectorMessenger: public G4UImessenger
 {
   public:
-    DetectorMessenger(DetectorConstruction* );
+    DetectorMessenger( DetectorConstruction* ) ;
    ~DetectorMessenger();
     
     void SetNewValue(G4UIcommand*, G4String);
@@ -60,7 +61,6 @@ class DetectorMessenger: public G4UImessenger
   private:
     DetectorConstruction* Detector;
     
-  private:
     G4UIdirectory*             detDir;
     G4UIdirectory*             appDir;
     G4UIdirectory*             worldDir;
@@ -82,16 +82,34 @@ class DetectorMessenger: public G4UImessenger
     G4UIcmdWith3VectorAndUnit* FieldBoxMagneticFieldCmd;
 
     G4UIcmdWithoutParameter*   AddApparatusSpiceTargetChamberCmd;
+    G4UIcmdWithoutParameter*   AddApparatus8piVacuumChamberCmd;
+    G4UIcmdWithAnInteger*      AddApparatus8piVacuumChamberAuxMatShellCmd;
+
+    G4UIcmdWithAString*         addBoxMatCmd;
+    G4UIcmdWithADoubleAndUnit*  addBoxThicknessCmd;
+    G4UIcmdWith3VectorAndUnit*  addBoxInnerDimensionsCmd;
+    G4UIcmdWith3Vector*         addBoxColourCmd;
+    G4UIcmdWithoutParameter*    addBoxCmd;
+
+    G4UIcmdWithAString*         addGridMatCmd;
+    G4UIcmdWithADoubleAndUnit*  addGridSizeCmd;
+    G4UIcmdWith3VectorAndUnit*  addGridDimensionsCmd;
+    G4UIcmdWith3Vector*         addGridColourCmd;
+    G4UIcmdWithoutParameter*    addGridCmd;
+
 
     // Detection Systems
     G4UIcmdWithAnInteger*   AddDetectionSystemGammaTrackingCmd;
     G4UIcmdWithAnInteger*   AddDetectionSystemBrillance380V1Cmd;
     G4UIcmdWithAnInteger*   AddDetectionSystemSodiumIodideCmd;
+    G4UIcmdWithAnInteger*   AddDetectionSystem8piCmd;
+    G4UIcmdWithAnInteger*   AddDetectionSystem8piDetectorCmd;
     G4UIcmdWithAnInteger*   AddDetectionSystemSceptarCmd;
     G4UIcmdWithAnInteger*   AddDetectionSystemGriffinForwardCmd;
     G4UIcmdWithAnInteger*   AddDetectionSystemGriffinForwardDetectorCmd;
     G4UIcmdWithAnInteger*   AddDetectionSystemGriffinBackCmd;
     G4UIcmdWithAnInteger*   AddDetectionSystemGriffinBackDetectorCmd;
+    G4UIcmdWith3Vector*     AddDetectionSystemGriffinPositionConfigCmd;
     G4UIcmdWithAnInteger*   AddDetectionSystemSpiceCmd;
     G4UIcmdWithAnInteger*   AddDetectionSystemSpiceV02Cmd;
     G4UIcmdWithAnInteger*   AddDetectionSystemPacesCmd;

@@ -32,40 +32,59 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
-#ifndef DetectionSystemGammaTracking_h
-#define DetectionSystemGammaTracking_h 1
+#ifndef Apparatus8piVacuumChamberAuxMatShell_h
+#define Apparatus8piVacuumChamberAuxMatShell_h 1
 
-#include "G4VUserDetectorConstruction.hh"
-#include "globals.hh"
+class G4LogicalVolume;
+class G4VPhysicalVolume;
+class G4Material;
+class DetectorMessenger;
 
-class DetectionSystemGammaTracking
+///////////////////////////////////////////////////////////////////////
+// Apparatus8piVacuumChamberAuxMatShell
+///////////////////////////////////////////////////////////////////////
+class Apparatus8piVacuumChamberAuxMatShell
 {
   public:
-    DetectionSystemGammaTracking();
-    ~DetectionSystemGammaTracking();
+    Apparatus8piVacuumChamberAuxMatShell();
+    ~Apparatus8piVacuumChamberAuxMatShell();
 
-    G4int Build() ;//G4SDManager* mySDman); 
-    G4int PlaceDetector(G4LogicalVolume* exp_hall_log, G4ThreeVector move, G4RotationMatrix* rotate, G4int detector_number); 
+  public:
+    void Build(G4LogicalVolume*, G4int);
+  
+  private:
+    G4LogicalVolume* expHallLog;
 
   private:
-    // Logical volumes        
-    G4LogicalVolume* logicShell;    
+    // LogicalVolumes used in Apparatus8piVacuumChamberAuxMatShell()
 
-    // Assembly volumes
-    G4AssemblyVolume* assembly; 
-
-//    SensitiveDetector* shell_SD;
-
-	  G4double shellRmin;
-    G4double shellThick;
-  
-    G4double phi_in;
-    G4double d_phi;
-    G4double th_in;
-    G4double d_th;
+    G4LogicalVolume* vacuum_chamber_sphere_log;
     
-    G4ThreeVector GetDirectionXYZ(G4double theta, G4double phi);
+  private:
+    // Physical Volumes used in Apparatus8piVacuumChamberAuxMatShell()
+
+    G4VPhysicalVolume* vacuum_chamber_sphere_phys;
+
+private:
+    ///////////////////////////////////////////////////////////////////
+    // Apparatus8piVacuumChamberAuxMatShellCylinder Properties
+    ///////////////////////////////////////////////////////////////////
+
+    // Materials
+    G4String vacuum_chamber_sphere_material;
+
+    // Dimensions
+    G4double vacuum_chamber_inner_radius;
+    G4double vacuum_chamber_outer_radius;
+
+  private: 
+    // internal methods for ConstructApparatus8piVacuumChamberAuxMatShell() for Building
+    void BuildApparatus8piVacuumChamberAuxMatShellSphere(G4int thickness);
+
+  private: 
+    // internal methods for ConstructApparatus8piVacuumChamberAuxMatShell() for Placing
+    void PlaceApparatus8piVacuumChamberAuxMatShellSphere();
+    
 };
 
 #endif
-
