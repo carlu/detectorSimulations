@@ -38,8 +38,8 @@
 #include "PrimaryGeneratorAction.hh"
 #include "RunAction.hh"
 #include "EventAction.hh"
-#include "SteppingAction.hh" // Included in new system
-#include "HistoManager.hh" // Included in new system
+#include "SteppingAction.hh" 
+#include "HistoManager.hh" 
 
 #ifdef G4VIS_USE
 #include "G4VisExecutive.hh"
@@ -56,6 +56,7 @@ int main(int argc,char** argv)
   // Choose the Random engine
   //
   CLHEP::HepRandom::setTheEngine(new CLHEP::RanecuEngine); // Used in PrimaryGeneratorAction 
+  //CLHEP::HepRandom::setSeed(0);
   
   // Construct the default run manager
   //

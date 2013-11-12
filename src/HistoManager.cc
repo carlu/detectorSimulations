@@ -238,7 +238,7 @@ void HistoManager::book()
       }
     }
 
-		// Brilliance Detector
+        // Brilliance Detector
     filename  = "labr_crystal_edep";
     MakeHisto(analysisManager, filename,  title, xmin, xmax, nbins);
 
@@ -252,7 +252,7 @@ void HistoManager::book()
         MakeHisto(analysisManager, filename,  title, xmin, xmax, nbins);
     }
 
-		// Sodium Iodide detector
+        // Sodium Iodide detector
     filename  = "sodiumIodide_crystal_edep";
     MakeHisto(analysisManager, filename,  title, xmin, xmax, nbins);
 
@@ -267,16 +267,26 @@ void HistoManager::book()
     }
         
     // Sceptar detector
-    filename  = "sceptar_crystal_edep";
+    filename  = "sceptar_edep_sum";
     MakeHisto(analysisManager, filename,  title, xmin, xmax, nbins);
 
-    filename  = "sceptar_crystal_edep_sum";
+    filename  = "sceptar_square_edep";
     MakeHisto(analysisManager, filename,  title, xmin, xmax, nbins);
 
-    for (G4int i=0; i < MAXNUMDET; i++) {
+    for (G4int i=0; i < MAXNUMDET/2; i++) {
         detString = G4intToG4String(i);
 
-        filename  = "sceptar_crystal_edep_det" + detString;
+        filename  = "sceptar_square_edep_det" + detString;
+        MakeHisto(analysisManager, filename,  title, xmin, xmax, nbins);
+    }
+
+    filename  = "sceptar_angled_edep";
+    MakeHisto(analysisManager, filename,  title, xmin, xmax, nbins);
+
+    for (G4int i=0; i < MAXNUMDET/2; i++) {
+        detString = G4intToG4String(i);
+
+        filename  = "sceptar_angled_edep_det" + detString;
         MakeHisto(analysisManager, filename,  title, xmin, xmax, nbins);
     }
     
@@ -306,7 +316,7 @@ void HistoManager::book()
 
         filename  = "spice_crystal_edep_det" + detString;
         MakeHisto(analysisManager, filename,  title, xmin, xmax, nbins);
-    } 
+    }
        
     // paces detector
     filename  = "paces_crystal_edep";
@@ -320,8 +330,8 @@ void HistoManager::book()
 
         filename  = "paces_crystal_edep_det" + detString;
         MakeHisto(analysisManager, filename,  title, xmin, xmax, nbins);
-    }    
-	}
+    }
+    }
 
   /////////////////////////////////////////////////////////////////////
   // Create 1 ntuple

@@ -44,13 +44,13 @@
 class DetectionSystemGriffin
 {
 	public:
-		DetectionSystemGriffin(G4int sel);
+		DetectionSystemGriffin(G4int sel, G4int suppSwitch, G4double detRad, G4int hevimetSel );
 		~DetectionSystemGriffin();
 
-        void Build() ; //G4SDManager* mySDman);
+        void Build() ; 
         // For detector specific dead layers
-        void BuildDeadLayerSpecificDetector(G4int det);
-
+        void BuildDeadLayerSpecificCrystal(G4int det);
+        void BuildEverythingButCrystals();
 		G4double GetCrystalDistanceFromOrigin() {return crystal_dist_from_origin;}        
 
     G4double transX(G4double x, G4double y, G4double z, G4double theta, G4double phi);
@@ -59,7 +59,8 @@ class DetectionSystemGriffin
 
     G4int PlaceDetector(G4LogicalVolume* exp_hall_log, G4ThreeVector moveBAH, G4RotationMatrix* rotateBAH, G4int detector_number); 
     // For detector specific dead layers
-    G4int PlaceDeadLayerSpecificDetector(G4LogicalVolume* exp_hall_log, G4int detector_number, G4int position_number);
+    G4int PlaceDeadLayerSpecificCrystal(G4LogicalVolume* exp_hall_log, G4int detector_number, G4int position_number);
+    G4int PlaceEverythingButCrystals(G4LogicalVolume* exp_hall_log, G4int detector_number, G4int position_number);
 
 	private:    
     G4String sdName0;
@@ -142,6 +143,10 @@ class DetectionSystemGriffin
 
 		G4double forward_inner_radius;
 		G4double back_inner_radius;
+		
+		G4double suppressor_forward_radius;
+		G4double suppressor_back_radius;
+		
 
 		// For the optimization of the depth segmentation
 		G4double depth_segmentation_adjustment;
@@ -194,6 +199,8 @@ class DetectionSystemGriffin
     G4double suppressor_extension_thickness;
     G4double suppressor_extension_length;
     G4double suppressor_extension_angle;
+    
+    G4double suppressor_extension_length_det ; 
 
     //Values for the HeavyMet
     G4double HeavyMet_thickness;
@@ -202,8 +209,13 @@ class DetectionSystemGriffin
     G4double air_box_front_width;
     G4double air_box_front_length;
     G4double air_box_back_length;
+    
+    G4double air_box_back_length_det ; 
+    G4double air_box_front_length_det ; 
+    G4double air_box_front_width_det ; 
 
     G4double shift;
+    G4double suppShift ;
 
     G4int copy_number;
     G4int copy_number_two;
@@ -216,6 +228,9 @@ class DetectionSystemGriffin
     
     G4double rhombi_diameter;
     G4double new_rhombi_radius;
+
+    G4double new_rhombi_radius_det;    
+
     G4double detector_position_shift;
     G4double applied_back_shift;
 
@@ -239,24 +254,27 @@ class DetectionSystemGriffin
     G4String electrodeMaterial;
     G4String structureMaterial;
 
-//    SensitiveDetector* germanium_block_SD;
-//    SensitiveDetector* left_casing_SD;
-//    SensitiveDetector* right_casing_SD;
-//    SensitiveDetector* left_extension_SD;
-//    SensitiveDetector* right_extension_SD;
-//    SensitiveDetector* back_plug_SD;
-
     // Assembly volumes
     G4AssemblyVolume* assembly;
     G4AssemblyVolume* germaniumAssembly;
-    // For detector specific dead layers
-    G4AssemblyVolume* germaniumAssemblyCry[4];
     G4AssemblyVolume* leftSuppressorCasingAssembly;
     G4AssemblyVolume* rightSuppressorCasingAssembly;
     G4AssemblyVolume* leftSuppressorExtensionAssembly;
     G4AssemblyVolume* rightSuppressorExtensionAssembly;
     G4AssemblyVolume* suppressorBackAssembly;
+    // For detector specific dead layers
+    G4AssemblyVolume* assemblyCry[4];
+    G4AssemblyVolume* germaniumAssemblyCry[4];
+    G4AssemblyVolume* leftSuppressorCasingAssemblyCry[4];
+    G4AssemblyVolume* rightSuppressorCasingAssemblyCry[4];
+    G4AssemblyVolume* leftSuppressorExtensionAssemblyCry[4];
+    G4AssemblyVolume* rightSuppressorExtensionAssemblyCry[4];
+    G4AssemblyVolume* suppressorBackAssemblyCry[4];
     G4AssemblyVolume* suppressorShellAssembly;
+    G4AssemblyVolume* backAndSideSuppressorShellAssembly ; 
+    G4AssemblyVolume* extensionSuppressorShellAssembly ; 
+    G4AssemblyVolume* hevimetAssembly ;   
+    
       
     // Logical volumes
     G4LogicalVolume* air_box_log;
@@ -265,8 +283,11 @@ class DetectionSystemGriffin
     void ConstructNewSuppressorCasingWithShells();
     void BuildelectrodeMatElectrodes();
     void ConstructComplexDetectorBlockWithDeadLayer();
+
     // For detector specific dead layers
     void ConstructComplexDetectorBlockWithDetectorSpecificDeadLayer(G4int det, G4int cry);
+    void ConstructNewSuppressorCasingDetectorSpecificDeadLayer(G4int det, G4int cry);
+    void ConstructNewSuppressorCasingJustShells();
     void ConstructDetector();
     void ConstructComplexDetectorBlock();
     void ConstructColdFinger();
