@@ -43,13 +43,18 @@
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
 
+//G4
 #include "EventAction.hh"
-
 #include "RunAction.hh"
-#include "HistoManager.hh"
 #include "G4Event.hh"
 
+//Root 
+#include "RootManager.hh"
+#include "HistoManager.hh"
+
+//c++
 #include <sstream>
+
 
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......
@@ -57,6 +62,7 @@
 EventAction::EventAction(RunAction* run, HistoManager* histo)
 :runAct(run),histoManager(histo)
 	{
+        evtNb = 0;
 		printModulo = 1000; 
 	}
 
@@ -69,12 +75,13 @@ EventAction::~EventAction()
 
 void EventAction::BeginOfEventAction(const G4Event* evt)
 {  
-  G4int evtNb = evt->GetEventID();
+  evtNb = evt->GetEventID();
   if (evtNb%printModulo == 0) 
 //    G4cout << "\n---> Begin of event: " << evtNb << G4endl;
     printf( " ---> Ev.# %5d\r", evtNb);
     G4cout.flush();
 
+	RootManager::instance()->SetEventNumber(evtNb); 
     ClearVariables();
 }
 
@@ -82,11 +89,58 @@ void EventAction::BeginOfEventAction(const G4Event* evt)
 
 void EventAction::EndOfEventAction(const G4Event*)
 {
+        G4double eventNumber = 0 ;
+        G4double stepNumber = 0;
+        G4int	 cryNumber  = 0;
+        G4int	 detNumber  = 0;
+        G4double depEnergy  = 0;
+        G4double posx       = 0;
+        G4double posy       = 0;
+        G4double posz       = 0;
+        G4double time       = 0;
+        G4double initialDirectionX       = 0;
+        G4double initialDirectionY       = 0;
+        G4double initialDirectionZ       = 0;
+        G4double initialEnergy       	 = 0;
+        G4int trackID       = 0;
+        G4String volume     = "";
+                        
+    for(G4int i = 0; i < MAXSTEPS; i++) {
+         
+        if(stepTracker[1][i] != 0 && histoManager->GetStepTrackerBool()) {
+
+        eventNumber = stepTracker[0][i] ;
+        stepNumber = stepTracker[1][i];
+        cryNumber  = stepTracker[2][i];
+        detNumber  = stepTracker[3][i];
+        depEnergy  = stepTracker[4][i];
+        posx       = stepTracker[5][i]/mm;
+        posy       = stepTracker[6][i]/mm;
+        posz       = stepTracker[7][i]/mm;
+        time       = stepTracker[8][i]/second;
+        initialDirectionX = stepTracker[9][i];
+        initialDirectionY = stepTracker[10][i];
+        initialDirectionZ = stepTracker[11][i];
+        initialEnergy = stepTracker[12][i];
+        trackID    = stepTracker[13][i];
+        volume    = stepVolume[i];
+        
+        histoManager->FillNtuple(eventNumber, stepNumber, cryNumber, detNumber, depEnergy, posx, posy, posz, time );     
+        RootManager::instance()->FillG4Hit(volume, detNumber, cryNumber, 11, depEnergy, posx, posy, posz, trackID, 11, initialEnergy, initialDirectionX, initialDirectionY, initialDirectionZ);	   // this is one hit of a Hit Collection
+        //RootManager::instance()->FillHist(1000/keV);		//optional
+        }
+		
+    }
+    
+    if (depEnergy>0.0) { // if condition satisfied Sort the HitCollection and make a physical event 
+		RootManager::instance()->SortEvent();
+		}
+    
   FillParticleType() ; 
   FillGridEkin() ;
   FillGriffinCryst() ;
   FillSodiumIodideCryst() ;
-	FillLaBrCryst() ;	
+  FillLaBrCryst() ;	
   
   // I included 'Cryst' on the following to match your naming convention above. If that 
   // doesn't fit with reality then please do change them. 
@@ -94,7 +148,13 @@ void EventAction::EndOfEventAction(const G4Event*)
   FillSceptarCryst() ;
   FillSpiceCryst() ;
   FillPacesCryst() ; 
-	Fill8piCryst() ;
+  Fill8piCryst() ;
+
+
+  //G4int i =0;
+  //histoManager->FillNtuple(stepTracker[0][i], stepTracker[1][i], stepTracker[2][i], stepTracker[3][i], stepTracker[4][i]/keV, stepTracker[5][i]/mm, stepTracker[6][i]/mm, stepTracker[7][i]/mm, stepTracker[8][i]/second );
+
+  //histoManager->FillNtuple(stepTracker[0][i], stepTracker[1][i], stepTracker[2][i], stepTracker[3][i], stepTracker[4][i]/keV, stepTracker[5][i]/mm, stepTracker[6][i]/mm, stepTracker[7][i]/mm, stepTracker[8][i]/second );
 
   ClearVariables() ;
 }
@@ -113,6 +173,15 @@ void EventAction::EndOfEventAction(const G4Event*)
 
 void EventAction::ClearVariables()
 {
+  if(histoManager->GetStepTrackerBool()) {
+      stepIndex = 0;
+      for (G4int i = 0 ; i < MAXSTEPS; i++) {
+        for (G4int j = 0 ; j < NUMSTEPVARS; j++) {
+            stepTracker[j][i] = 0;
+        }
+      }
+  }
+
   for (G4int i = 0 ; i < NUMPARTICLETYPES; i++) {
       particleTypes[i]                  = 0;
   }
@@ -367,11 +436,47 @@ void EventAction::FillSpiceCryst()
 
 }
 
-void EventAction::FillPacesCryst() 
+void EventAction::FillS3Cryst() 
 {
 
 }
-  
+
+void EventAction::FillPacesCryst() 
+{
+		G4double  energySum = 0, trackSum = 0;
+    for (G4int i=0; i < MAXNUMDET; i++) {
+      if(PacesCrystEnergyDet[i] > MINENERGYTHRES) {
+        // fill energies in each detector
+        if(WRITEEDEPHISTOS)   histoManager->FillHisto(paces_crystal_edep_det0+i, PacesCrystEnergyDet[i]);
+        // fill standard energy and track spectra
+        if(WRITEEDEPHISTOS)   histoManager->FillHisto(paces_crystal_edep, PacesCrystEnergyDet[i]);
+        // add sum energies
+        energySum    += PacesCrystEnergyDet[i];
+        trackSum     += PacesCrystTrackDet[i];
+      }
+    }
+    if(energySum > MINENERGYTHRES) {
+      if(WRITEEDEPHISTOS)     histoManager->FillHisto(paces_crystal_edep_sum, energySum);
+    }     
+}
+
+//void AddStepTracker(G4int eventNumber, G4int stepNumber, G4int cryNumber, G4int detNumber, G4double depEnergy, G4double posx, G4double posy, G4double posz, G4double time)
+//{
+//    stepTracker[0][stepIndex] = (G4double)(eventNumber);
+//    stepTracker[1][stepIndex] = (G4double)(stepNumber);
+//    stepTracker[2][stepIndex] = (G4double)(cryNumber);
+//    stepTracker[3][stepIndex] = (G4double)(detNumber);
+//    stepTracker[4][stepIndex] = depEnergy;
+//    stepTracker[5][stepIndex] = posx;
+//    stepTracker[6][stepIndex] = posy;
+//    stepTracker[7][stepIndex] = posz;
+//    stepTracker[8][stepIndex] = time;
+//    stepIndex++;
+
+
+
+//}
+
 // *****************************************************************************
 // *  Old code.
 // *	

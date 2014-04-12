@@ -39,7 +39,9 @@
 #include "RunAction.hh"
 #include "EventAction.hh"
 #include "SteppingAction.hh" 
+#include "TrackingAction.hh"
 #include "HistoManager.hh" 
+#include "RootManager.hh"
 
 #ifdef G4VIS_USE
 #include "G4VisExecutive.hh"
@@ -69,6 +71,9 @@ int main(int argc,char** argv)
   //
   PhysicsList* physics = new PhysicsList;
   runManager->SetUserInitialization(physics);
+  //
+  TrackingAction* tracking_action = new TrackingAction(); // MHD 19 April 2013
+  runManager->SetUserAction(tracking_action); // MHD 19 April 2013
     
   HistoManager*  histo = new HistoManager(); // Included in new system
     
@@ -136,6 +141,10 @@ int main(int argc,char** argv)
   // Free the store: user actions, physics_list and detector_description are
   //                 owned and deleted by the run manager, so they should not
   //                 be deleted in the main() program !
+  
+  //Close the root Manager
+  RootManager::instance()->Close();
+
 #ifdef G4VIS_USE
   delete visManager;
 #endif

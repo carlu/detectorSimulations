@@ -39,6 +39,9 @@ class HistoManager;
 
 using namespace std;
 
+static const int MAXSTEPS = 1000;
+static const int NUMSTEPVARS = 14;
+
 class EventAction : public G4UserEventAction
 {
 public:
@@ -47,9 +50,41 @@ public:
 
   void  BeginOfEventAction(const G4Event*);
   void  EndOfEventAction(const G4Event*);
-    
+
+  G4int GetEventNumber(){return evtNb;};
+
+  void AddStepTracker(G4double eventNumber, G4double stepNumber, G4String volume, G4double cryNumber, G4double detNumber, 
+  						G4double depEnergy, G4double posx, G4double posy, G4double posz, G4double time, 
+  						G4double initialDirectionX, G4double initialDirectionY, G4double initialDirectionZ, 
+  						G4double initialEnergy, G4int trackID) {
+  						
+					  if(histoManager->GetStepTrackerBool())   {
+						  	stepTracker[0][stepIndex] = eventNumber; 
+						  	stepTracker[1][stepIndex] = stepNumber; 
+						  	stepTracker[2][stepIndex] = cryNumber; 
+						  	stepTracker[3][stepIndex] = detNumber; 
+						  	stepTracker[4][stepIndex] = depEnergy; 
+						  	stepTracker[5][stepIndex] = posx; 
+						  	stepTracker[6][stepIndex] = posy; 
+						  	stepTracker[7][stepIndex] = posz; 
+						  	stepTracker[8][stepIndex] = time; 
+						  	stepTracker[9][stepIndex] = initialDirectionX;
+							stepTracker[10][stepIndex] = initialDirectionY;
+							stepTracker[11][stepIndex] = initialDirectionZ;
+						  	stepTracker[12][stepIndex] = initialEnergy;
+						  	stepTracker[13][stepIndex] = trackID;
+						  	stepVolume[stepIndex] = volume ; 	
+						  	stepIndex++; 
+						  	if(stepIndex == MAXSTEPS) 	{
+						  		G4cout << "\n ----> error 13423549 \n" << G4endl; 
+						  		exit(1);
+						  		}
+						  }; 
+ 	};
+
   // particle types
   void AddParticleType(G4int index) {particleTypes[index] += 1;};
+
   // Grid kinetic energy of gammas and electrons
   void SetGridEKinElectronDet(G4double de, G4double dl, G4int det) { if(gridEKinElectronDet[det] < de) gridEKinElectronDet[det] = de; gridTrackElectronDet[det] += dl;};
   void SetGridEKinGammaDet(G4double de, G4double dl, G4int det) { if(gridEKinGammaDet[det] < de) gridEKinGammaDet[det] = de; gridTrackGammaDet[det] += dl;};
@@ -70,33 +105,43 @@ public:
 
 	// NOTE: I am initializing and strucuring these based on AddSodiumIodideCrystDet and AddLaBrCrystDet
 	// please correct them if they are wrong. 
-	void Add8piCrystDet(G4double de, G4double dl, G4int det) {EightPiCrystEnergyDet[det] += de; EightPiCrystTrackDet[det] += dl;} ;
+  void Add8piCrystDet(G4double de, G4double dl, G4int det) {EightPiCrystEnergyDet[det] += de; EightPiCrystTrackDet[det] += dl;} ;  
+  void AddSpiceCrystDet(G4double de, G4double dl, G4int det) {SpiceCrystEnergyDet[det] += de; SpiceCrystTrackDet[det] += dl;} ;
+  void AddS3CrystDet(G4double de, G4double dl, G4int det) {SpiceCrystEnergyDet[det] += de; SpiceCrystTrackDet[det] += dl;} ;
+  void AddPacesCrystDet(G4double de, G4double dl, G4int det) {PacesCrystEnergyDet[det] += de; PacesCrystTrackDet[det] += dl;} ;
 
-	void AddSpiceCrystDet(G4double de, G4double dl, G4int det) {SpiceCrystEnergyDet[det] += de; SpiceCrystTrackDet[det] += dl;} ;
-	
-	void AddPacesCrystDet(G4double de, G4double dl, G4int det) {PacesCrystEnergyDet[det] += de; PacesCrystTrackDet[det] += dl;} ;
+
 
 private:
 
-  void ClearVariables();
+	void ClearVariables();
 
-  void FillParticleType();
-  void FillGridEkin();
-  void FillGriffinCryst();
-  void FillLaBrCryst();
-  void FillSodiumIodideCryst();
+	void FillParticleType();
+	void FillGridEkin();
+	void FillGriffinCryst();
+	void FillLaBrCryst();
+	void FillSodiumIodideCryst();
 	void FillSceptarCryst() ;
- 	void FillSpiceCryst() ;
- 	void FillPacesCryst() ; 
+	void FillSpiceCryst() ;
+	void FillS3Cryst();
+	void FillPacesCryst() ; 
 	void Fill8piCryst() ;
 
 	RunAction*    runAct;
 	HistoManager* histoManager;
-		
+
 	G4int     printModulo;
+    G4int     evtNb;
+    G4bool    stepTrackerBool;
+
+    // tracking info
+    G4double stepTracker[NUMSTEPVARS][MAXSTEPS];
+    G4String stepVolume[MAXSTEPS]; // volume at each step 
+    G4int    stepIndex;
 
 	// Particle types in simulation
 	G4int particleTypes[NUMPARTICLETYPES];
+
 
 	// Grid kinetic energy / track length of gamma and electon
 	G4double gridEKinElectronDet[MAXNUMDET];
@@ -140,6 +185,9 @@ private:
 
 	G4double SpiceCrystEnergyDet[MAXNUMDET] ;
 	G4double SpiceCrystTrackDet[MAXNUMDET] ;	
+	
+	G4double S3CrystEnergyDet[MAXNUMDET] ;
+	G4double S3CrystTrackDet[MAXNUMDET] ;	
 	
 	G4double PacesCrystEnergyDet[MAXNUMDET] ;
 	G4double PacesCrystTrackDet[MAXNUMDET] ;

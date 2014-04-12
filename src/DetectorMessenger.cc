@@ -82,6 +82,10 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* Det)
   WorldMagneticFieldCmd->SetGuidance("Set world magnetic field - x y z unit.");
   WorldMagneticFieldCmd->SetUnitCategory("Magnetic flux density");
   WorldMagneticFieldCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+  
+  WorldTabMagneticFieldCmd = new G4UIcmdWithAString("/DetSys/world/tabMagneticField",this);
+  WorldTabMagneticFieldCmd->SetGuidance("Set tabulated magnetic field.");
+  WorldTabMagneticFieldCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 
   GenericTargetCmd = new G4UIcmdWithAString("/DetSys/app/genericTarget",this);
   GenericTargetCmd->SetGuidance("Select material of the target.");
@@ -188,13 +192,13 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* Det)
   AddDetectionSystemGammaTrackingCmd->SetGuidance("Add Detection System GammaTracking");
   AddDetectionSystemGammaTrackingCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 
-  AddDetectionSystemBrillance380V1Cmd = new G4UIcmdWithAnInteger("/DetSys/det/addBrillance380V1",this);
-  AddDetectionSystemBrillance380V1Cmd->SetGuidance("Add Detection System Brillance380V1");
-  AddDetectionSystemBrillance380V1Cmd->AvailableForStates(G4State_PreInit,G4State_Idle);
-
   AddDetectionSystemSodiumIodideCmd = new G4UIcmdWithAnInteger("/DetSys/det/addSodiumIodide",this);
   AddDetectionSystemSodiumIodideCmd->SetGuidance("Add Detection System SodiumIodide");
   AddDetectionSystemSodiumIodideCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  AddDetectionSystemLanthanumBromideCmd = new G4UIcmdWithAnInteger("/DetSys/det/addLanthanumBromide",this);
+  AddDetectionSystemLanthanumBromideCmd->SetGuidance("Add Detection System LanthanumBromide");
+  AddDetectionSystemLanthanumBromideCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 
   AddDetectionSystem8piCmd = new G4UIcmdWithAnInteger("/DetSys/det/add8pi",this);
   AddDetectionSystem8piCmd->SetGuidance("Add Detection System 8pi");
@@ -261,14 +265,28 @@ DetectorMessenger::DetectorMessenger(DetectorConstruction* Det)
   AddDetectionSystemSpiceCmd = new G4UIcmdWithAnInteger("/DetSys/det/addSpice",this);
   AddDetectionSystemSpiceCmd->SetGuidance("Add Detection System Spice");
   AddDetectionSystemSpiceCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
-
-  AddDetectionSystemSpiceV02Cmd = new G4UIcmdWithAnInteger("/DetSys/det/addSpiceV02",this);
-  AddDetectionSystemSpiceV02Cmd->SetGuidance("Add Detection System SpiceV02");
-  AddDetectionSystemSpiceV02Cmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+  
+  SetSpiceResolutionVariablesCmd = new G4UIcommand("/DetSys/Spice/setResolution",this);
+  SetSpiceResolutionVariablesCmd->SetGuidance("Set Resolution of SPICE Detection System");
+  G4UIparameter *parameter1,*parameter2, *parameter3;
+  G4bool omitable;
+  parameter1 = new G4UIparameter ("inter", 'd', omitable = false);
+  SetSpiceResolutionVariablesCmd->SetParameter(parameter1);
+  parameter2 = new G4UIparameter ("gain", 'd', omitable = false);
+  SetSpiceResolutionVariablesCmd->SetParameter(parameter2);
+  SetSpiceResolutionVariablesCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+  
+  AddDetectionSystemS3Cmd = new G4UIcmdWithAnInteger("/DetSys/det/addS3",this);
+  AddDetectionSystemS3Cmd->SetGuidance("Add Detection System S3");
+  AddDetectionSystemS3Cmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 
   AddDetectionSystemPacesCmd = new G4UIcmdWithAnInteger("/DetSys/det/addPaces",this);
   AddDetectionSystemPacesCmd->SetGuidance("Add Detection System Paces");
   AddDetectionSystemPacesCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
+
+  UseTIGRESSPositionsCmd = new G4UIcmdWithABool("/DetSys/det/UseTIGRESSPositions",this);
+  UseTIGRESSPositionsCmd->SetGuidance("Use TIGRESS detector positions rather than GRIFFIN");
+  UseTIGRESSPositionsCmd->AvailableForStates(G4State_PreInit,G4State_Idle);
 
 }
 
@@ -283,6 +301,7 @@ DetectorMessenger::~DetectorMessenger()
   delete WorldDimensionsCmd;
   delete WorldVisCmd;
   delete WorldMagneticFieldCmd;
+  delete WorldTabMagneticFieldCmd;
   delete DetSysDir; 
   delete UpdateCmd;
   delete GenericTargetCmd;
@@ -306,13 +325,14 @@ DetectorMessenger::~DetectorMessenger()
   delete AddDetectionSystemGammaTrackingCmd;
   delete AddApparatus8piVacuumChamberCmd;
   delete AddApparatus8piVacuumChamberAuxMatShellCmd;
-  delete AddDetectionSystemBrillance380V1Cmd;
   delete AddDetectionSystemSodiumIodideCmd;
+  delete AddDetectionSystemLanthanumBromideCmd;
   delete AddDetectionSystem8piCmd;
   delete AddDetectionSystem8piDetectorCmd;
   delete AddDetectionSystemSceptarCmd;
+  delete SetSpiceResolutionVariablesCmd;
   delete AddDetectionSystemSpiceCmd;
-  delete AddDetectionSystemSpiceV02Cmd;
+  delete AddDetectionSystemS3Cmd;
   delete AddDetectionSystemPacesCmd;
   
   delete AddDetectionSystemGriffinForwardCmd;
@@ -328,6 +348,8 @@ DetectorMessenger::~DetectorMessenger()
   delete AddDetectionSystemGriffinSetRadialDistanceCmd ; 
   delete AddDetectionSystemGriffinSetExtensionSuppLocationCmd ; 
   delete AddDetectionSystemGriffinSetDeadLayerCmd ; 
+
+  delete UseTIGRESSPositionsCmd;
 
 
 }
@@ -347,6 +369,9 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
   }
   if( command == WorldMagneticFieldCmd ) {
     Detector->SetWorldMagneticField(WorldMagneticFieldCmd->GetNew3VectorValue(newValue));
+  }
+  if( command == WorldTabMagneticFieldCmd ) {
+    Detector->SetTabMagneticField(newValue);
   }
   if( command == UpdateCmd ) { 
     Detector->UpdateGeometry(); 
@@ -414,11 +439,11 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
   if( command == AddDetectionSystemGammaTrackingCmd ) {
     Detector->AddDetectionSystemGammaTracking(AddDetectionSystemGammaTrackingCmd->GetNewIntValue(newValue)); 
   }
-  if( command == AddDetectionSystemBrillance380V1Cmd ) { 
-    Detector->AddDetectionSystemBrillance380V1(AddDetectionSystemBrillance380V1Cmd->GetNewIntValue(newValue)); 
-  }
   if( command == AddDetectionSystemSodiumIodideCmd ) {
     Detector->AddDetectionSystemSodiumIodide(AddDetectionSystemSodiumIodideCmd->GetNewIntValue(newValue));
+  }
+  if( command == AddDetectionSystemLanthanumBromideCmd ) {
+    Detector->AddDetectionSystemLanthanumBromide(AddDetectionSystemLanthanumBromideCmd->GetNewIntValue(newValue));
   }
   if( command == AddDetectionSystem8piCmd ) { 
     Detector->AddDetectionSystem8pi(AddDetectionSystem8piCmd->GetNewIntValue(newValue)); 
@@ -468,12 +493,23 @@ void DetectorMessenger::SetNewValue(G4UIcommand* command,G4String newValue)
   if( command == AddDetectionSystemSpiceCmd ) { 
     Detector->AddDetectionSystemSpice(AddDetectionSystemSpiceCmd->GetNewIntValue(newValue)); 
   }
-  if( command == AddDetectionSystemSpiceV02Cmd ) {
-    Detector->AddDetectionSystemSpiceV02(AddDetectionSystemSpiceV02Cmd->GetNewIntValue(newValue));
+  if( command == SetSpiceResolutionVariablesCmd ) { 
+    G4double inter,gain;
+    const char* s = newValue;
+    std::istringstream is ((char*)s);
+    is>>inter>>gain;
+    Detector->SetSpiceResolutionVariables(inter,gain);
+  }
+  if( command == AddDetectionSystemS3Cmd ) { 
+    Detector->AddDetectionSystemS3(AddDetectionSystemS3Cmd->GetNewIntValue(newValue)); 
   }
   if( command == AddDetectionSystemPacesCmd ) {
     Detector->AddDetectionSystemPaces(AddDetectionSystemPacesCmd->GetNewIntValue(newValue));
   }
+  if( command == UseTIGRESSPositionsCmd ) {
+    Detector->UseTIGRESSPositions(UseTIGRESSPositionsCmd->GetNewBoolValue(newValue));
+  }
+
 }
 
 //....oooOO0OOooo........oooOO0OOooo........oooOO0OOooo........oooOO0OOooo......

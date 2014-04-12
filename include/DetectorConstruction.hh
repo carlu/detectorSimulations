@@ -46,16 +46,16 @@ class G4VPhysicalVolume;
 class G4Material;
 
 class DetectorMessenger;
-//class SensitiveDetector;
-class DetectionSystemBrillance380V1;
+class SensitiveDetector;
 class DetectionSystemGammaTracking;
 class DetectionSystemGriffin;
 class DetectionSystem8pi;
 class DetectionSystemSceptar;
 class DetectionSystemSpice;
-class DetectionSystemSpiceV02;
+class DetectionSystemS3;
 class DetectionSystemPaces;
 class DetectionSystemSodiumIodide;
+class DetectionSystemLanthanumBromide;
 
 class DetectionSystemBox;
 
@@ -76,6 +76,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     void SetWorldDimensions( G4ThreeVector );
     void SetWorldVis( G4bool );
     void SetWorldMagneticField( G4ThreeVector );
+    void SetTabMagneticField(G4String);
 
     void SetGenericTargetMaterial( G4String );
     void SetGenericTargetDimensions( G4ThreeVector );
@@ -114,8 +115,8 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     void UpdateGeometry();
 
     void AddDetectionSystemGammaTracking(G4int ndet);
-    void AddDetectionSystemBrillance380V1(G4int ndet);
     void AddDetectionSystemSodiumIodide(G4int ndet);
+    void AddDetectionSystemLanthanumBromide(G4int ndet);
     void AddDetectionSystem8pi(G4int ndet);
     void AddDetectionSystem8piDetector(G4int ndet);
     void AddDetectionSystemGriffinForward(G4int ndet);
@@ -133,9 +134,12 @@ class DetectorConstruction : public G4VUserDetectorConstruction
 
     void AddDetectionSystemSceptar(G4int ndet);
     void AddDetectionSystemPaces(G4int ndet);
-    void AddDetectionSystemSpice(G4int ndet);
-    void AddDetectionSystemSpiceV02(G4int ndet);
+    
+    void SetSpiceResolutionVariables(G4double intercept, G4double gain);
+    void AddDetectionSystemSpice(G4int nRings);
+    void AddDetectionSystemS3(G4int nRings);
 
+    void UseTIGRESSPositions( G4bool input )                  {useTigressPositions = input;};
   private:
   
   	MagneticField* worldMagField;
@@ -153,6 +157,7 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4int     customDetectorPosition ; 
     G4int     customDetectorVal ; 
     G4int     hevimetSelector ; 
+    G4bool    useTigressPositions;
     
     // Box
     G4String           box_mat;
@@ -191,6 +196,8 @@ class DetectorConstruction : public G4VUserDetectorConstruction
     G4ThreeVector fieldBoxMagneticField;
 
     G4String matWorldName;
+    
+    G4double 			SpiceResolutionVariables[2];
                  
     DetectorMessenger* detectorMessenger;
 
